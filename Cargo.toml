@@ -1,0 +1,10 @@
+[package]
+name = "sumdir"
+version = "0.1.0"
+authors = ["Sharaf Zaman <sharafzaz121@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+blake2 = "0.8.0"
+walkdir = "2"
+base64 = "0.10"
