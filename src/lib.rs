@@ -10,9 +10,9 @@ use base64;
 /// ```no_run
 /// use checksumdir;
 /// 
-/// assert_eq!("{}", checksumdir::dir_hash("test-checksum"));
+/// assert_eq!("{}", checksumdir::checksumdir("test-checksum"));
 /// ```
-pub fn dir_hash(dir_name: &str) -> Result<String> {
+pub fn checksumdir(dir_name: &str) -> Result<String> {
 	let mut hasher = Blake2b::new();
 
 	for entry in WalkDir::new(dir_name) {
@@ -49,8 +49,8 @@ fn digested(hasher: Blake2b) -> String {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test_dir_hash(){
-		assert_eq!(super::dir_hash("test-checksum").unwrap(),
+    fn test_checksumdir(){
+		assert_eq!(super::checksumdir("test-checksum").unwrap(),
 		 "mupKycbw2LJSCieIPeOJp6NTHQY0gcbcFXIxUczmrscNcb+iqW1FCxMj7dpzYCj+UsvoXGmqLhYiBvhrgwlsyQ==");
 	}
 }
