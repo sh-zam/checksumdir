@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufReader, BufRead};
+use std::io::{BufReader, BufRead, Result};
 use std::path::Path;
 use walkdir::WalkDir;
 
@@ -12,34 +12,33 @@ use base64;
 /// 
 /// assert_eq!("{}", sumdir::dir_hash("test-checksum"));
 /// ```
-pub fn dir_hash(dir_name: &str) -> String {
+pub fn dir_hash(dir_name: &str) -> Result<String> {
 	let mut hasher = Blake2b::new();
 
 	for entry in WalkDir::new(dir_name) {
-		let entry = entry.unwrap();
+		let entry = entry?;
 		let file_path = entry.path();
 		if file_path.is_dir() {
 			continue;
 		}
-		hasher = file_hash(file_path, hasher);
+		hasher = file_hash(file_path, hasher)?;
 	}
-	digested(hasher)
+	Ok(digested(hasher))
 }
 
-fn file_hash(file_path: &Path, mut hasher: Blake2b) -> Blake2b {
-	let file = File::open(file_path)
-		.expect("File could not be opened");
+fn file_hash(file_path: &Path, mut hasher: Blake2b) -> Result<Blake2b> {
+	let file = File::open(file_path)?;
 	let mut reader = BufReader::new(file);
 	loop {
 		let length = {
-			let buffer = reader.fill_buf().unwrap();
+			let buffer = reader.fill_buf()?;
 			hasher.input(buffer);
 			buffer.len()
 		};
 		if length == 0 { break; }
 		reader.consume(length);
 	}
-	hasher
+	Ok(hasher)
 }
 
 fn digested(hasher: Blake2b) -> String {
@@ -51,7 +50,7 @@ fn digested(hasher: Blake2b) -> String {
 mod tests {
     #[test]
     fn test_dir_hash(){
-		assert_eq!(super::dir_hash("test-checksum"),
+		assert_eq!(super::dir_hash("test-checksum").unwrap(),
 		 "mupKycbw2LJSCieIPeOJp6NTHQY0gcbcFXIxUczmrscNcb+iqW1FCxMj7dpzYCj+UsvoXGmqLhYiBvhrgwlsyQ==");
 	}
 }
