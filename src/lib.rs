@@ -6,7 +6,13 @@ use walkdir::WalkDir;
 use blake2::{Blake2b, Digest};
 use base64;
 
-pub fn traverse(dir_name: &str) -> String {
+/// Computes deterministic hash of a directory.
+/// ```no_run
+/// use sumdir;
+/// 
+/// assert_eq!("{}", sumdir::dir_hash("test-checksum"));
+/// ```
+pub fn dir_hash(dir_name: &str) -> String {
 	let mut hasher = Blake2b::new();
 
 	for entry in WalkDir::new(dir_name) {
@@ -44,8 +50,8 @@ fn digested(hasher: Blake2b) -> String {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn demo_traverse(){
-		assert_eq!(super::traverse("test-checksum"),
+    fn test_dir_hash(){
+		assert_eq!(super::dir_hash("test-checksum"),
 		 "mupKycbw2LJSCieIPeOJp6NTHQY0gcbcFXIxUczmrscNcb+iqW1FCxMj7dpzYCj+UsvoXGmqLhYiBvhrgwlsyQ==");
 	}
 }
