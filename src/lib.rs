@@ -8,9 +8,9 @@ use base64;
 
 /// Computes deterministic hash of a directory.
 /// ```no_run
-/// use sumdir;
+/// use checksumdir;
 /// 
-/// assert_eq!("{}", sumdir::dir_hash("test-checksum"));
+/// assert_eq!("{}", checksumdir::dir_hash("test-checksum"));
 /// ```
 pub fn dir_hash(dir_name: &str) -> Result<String> {
 	let mut hasher = Blake2b::new();
