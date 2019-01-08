@@ -3,6 +3,8 @@ name = "sumdir"
 version = "0.1.0"
 authors = ["Sharaf Zaman <sharafzaz121@gmail.com>"]
 edition = "2018"
+description = "Compute deterministic hash of a directory"
+license = "MIT"
 
 [dependencies]
 blake2 = "0.8.0"
