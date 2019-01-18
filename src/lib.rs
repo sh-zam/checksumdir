@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::{BufReader, BufRead, Result};
 use std::path::Path;
+use std::collections::HashSet;
+
 use walkdir::{WalkDir, DirEntry};
 use blake2::{Blake2b, Digest};
 use base64;
@@ -46,7 +48,7 @@ fn compute(dir_path: &str, opts: ChecksumOptions) -> Result<Blake2b> {
 }
 
 pub struct ChecksumOptions<'a> {
-	pub excluded: Vec<&'a str>,
+	pub excluded: HashSet<&'a str>,
 	pub ignore_hidden: bool,
 	pub follow_symlinks: bool,
 }
@@ -55,7 +57,7 @@ pub struct ChecksumOptions<'a> {
 impl<'a> Default for ChecksumOptions<'a> {
 	fn default() -> ChecksumOptions<'a> {
 		ChecksumOptions {
-			excluded: vec![""],
+			excluded: HashSet::new(),
 			ignore_hidden: false,
 			follow_symlinks: false,
 		}
@@ -67,9 +69,14 @@ impl<'a> ChecksumOptions<'a> {
 		excluded_dirs: Vec<&'a str>,
 		ignore_hidden: bool, 
 		follow_symlinks: bool
-		) -> Self {
+		) -> Self 
+	{
+		let mut set = HashSet::new();
+		for i in excluded_dirs {
+			set.insert(i);
+		}
 		ChecksumOptions {
-			excluded: excluded_dirs,
+			excluded: set,
 			ignore_hidden,
 			follow_symlinks
 		}
@@ -103,7 +110,7 @@ pub fn is_hidden(entry: &DirEntry) -> bool {
 		.unwrap_or(false)
 }
 
-pub fn is_in_list<'a>(list: &[&'a str], entry: &DirEntry) -> bool {
+pub fn is_in_list<'a>(list: &HashSet<&'a str>, entry: &DirEntry) -> bool {
 	list.contains(&entry.file_name().to_str().unwrap_or(""))
 }
 
