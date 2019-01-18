@@ -28,37 +28,20 @@ pub fn checksumdir_with_options(
 fn compute(dir_path: &str, opts: ChecksumOptions) -> Result<Blake2b> {
 	let mut hasher = Blake2b::new();
 
-	let mut it = WalkDir::new(dir_path).follow_links(opts.follow_symlinks)
-			.into_iter();
-
-	loop { 
-		let entry: DirEntry = match it.next() {
-			None => break,
-			Some(Err(_)) => continue,
-			Some(Ok(entry)) => entry,
-		};
-
+	let it = WalkDir::new(dir_path).follow_links(opts.follow_symlinks)
+			.into_iter()
+			.filter_entry(|e| {
+				!(opts.ignore_hidden && is_hidden(e)) &&
+				!is_in_list(&opts.excluded, e)
+			})
+			.filter_map(|e| e.ok())
+			.filter(|e| !e.file_type().is_dir());
+	
+	for entry in it {
 		let file_path = entry.path();
-		let file_name = entry.file_name().to_str().unwrap_or("");
-
-		if entry.file_type().is_dir() 
-		{
-			if opts.excluded.contains(&file_name) ||
-			(opts.ignore_hidden && is_hidden(&entry))
-			{
-				it.skip_current_dir();
-			}
-			continue;
-		}
-		// if it is a file and hidden and to be ignored
-		if opts.ignore_hidden && is_hidden(&entry) ||
-		 opts.excluded.contains(&file_name) 
-		{
-			continue;
-		}
-
 		hasher = file_hash(file_path, hasher)?;
 	}
+
 	Ok(hasher)
 }
 
@@ -118,6 +101,10 @@ pub fn is_hidden(entry: &DirEntry) -> bool {
 		.to_str()
 		.map(|s| s.starts_with("."))
 		.unwrap_or(false)
+}
+
+pub fn is_in_list<'a>(list: &[&'a str], entry: &DirEntry) -> bool {
+	list.contains(&entry.file_name().to_str().unwrap_or(""))
 }
 
 #[cfg(test)]
