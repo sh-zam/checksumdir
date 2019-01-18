@@ -18,7 +18,6 @@ pub fn checksumdir(dir_path: &str) -> Result<String> {
 	Ok(digested(compute(dir_path, ChecksumOptions::default())?))
 }
 
-
 pub fn checksumdir_with_options(
 		dir_path: &str, 
 		opts: ChecksumOptions) 
@@ -27,32 +26,12 @@ pub fn checksumdir_with_options(
 	Ok(digested(compute(dir_path, opts)?))
 }
 
-fn compute(dir_path: &str, opts: ChecksumOptions) -> Result<Blake2b> {
-	let mut hasher = Blake2b::new();
-
-	let it = WalkDir::new(dir_path).follow_links(opts.follow_symlinks)
-			.into_iter()
-			.filter_entry(|e| {
-				!(opts.ignore_hidden && is_hidden(e)) &&
-				!is_in_list(&opts.excluded, e)
-			})
-			.filter_map(|e| e.ok())
-			.filter(|e| !e.file_type().is_dir());
-	
-	for entry in it {
-		let file_path = entry.path();
-		hasher = file_hash(file_path, hasher)?;
-	}
-
-	Ok(hasher)
-}
 
 pub struct ChecksumOptions<'a> {
-	pub excluded: HashSet<&'a str>,
-	pub ignore_hidden: bool,
-	pub follow_symlinks: bool,
+	excluded: HashSet<&'a str>,
+	ignore_hidden: bool,
+	follow_symlinks: bool,
 }
-
 
 impl<'a> Default for ChecksumOptions<'a> {
 	fn default() -> ChecksumOptions<'a> {
@@ -83,6 +62,26 @@ impl<'a> ChecksumOptions<'a> {
 	}
 }
 
+fn compute(dir_path: &str, opts: ChecksumOptions) -> Result<Blake2b> {
+	let mut hasher = Blake2b::new();
+
+	let it = WalkDir::new(dir_path).follow_links(opts.follow_symlinks)
+			.into_iter()
+			.filter_entry(|e| {
+				!(opts.ignore_hidden && is_hidden(e)) &&
+				!is_in_list(&opts.excluded, e)
+			})
+			.filter_map(|e| e.ok())
+			.filter(|e| !e.file_type().is_dir());
+	
+	for entry in it {
+		let file_path = entry.path();
+		hasher = file_hash(file_path, hasher)?;
+	}
+
+	Ok(hasher)
+}
+
 fn file_hash(file_path: &Path, mut hasher: Blake2b) -> Result<Blake2b> {
 	let file = File::open(file_path)?;
 	let mut reader = BufReader::new(file);
@@ -103,14 +102,14 @@ fn digested(hasher: Blake2b) -> String {
 	base64::encode(&digest)
 }
 
-pub fn is_hidden(entry: &DirEntry) -> bool { 
+fn is_hidden(entry: &DirEntry) -> bool { 
 	entry.file_name()
 		.to_str()
 		.map(|s| s.starts_with("."))
 		.unwrap_or(false)
 }
 
-pub fn is_in_list<'a>(list: &HashSet<&'a str>, entry: &DirEntry) -> bool {
+fn is_in_list<'a>(list: &HashSet<&'a str>, entry: &DirEntry) -> bool {
 	list.contains(&entry.file_name().to_str().unwrap_or(""))
 }
 
